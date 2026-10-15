@@ -39,33 +39,34 @@
                 </button>
 
                 <div id="settings-menu"
-                    class="hidden absolute right-0 mt-2 w-56 max-h-[calc(100vh-5rem)] overflow-y-auto bg-white dark:bg-munti-blue-0 rounded-lg shadow-lg py-1 z-50 border border-slate-grey/20 dark:border-munti-blue-1/50">
-                    <a href="{{ route('settings.port') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">Serial Port Setup</a>
+                    class="hidden absolute right-0 mt-2 w-56 max-h-[calc(100vh-5rem)] overflow-y-auto bg-munti-blue-0 rounded-lg shadow-lg py-1 z-50 border border-munti-blue-1/50">
+                    <a href="{{ route('settings.port') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">Serial Port Setup</a>
                     @if(in_array(Auth::user()->user_level ?? '', ['superadmin', 'admin']))
-                    <a href="{{ route('settings.api') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">API</a>
-                    <a href="{{ route('settings.signals') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">Signals</a>
-                    <a href="{{ route('settings.locations') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">Locations & Devices</a>
+                    <a href="{{ route('settings.api') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">API</a>
+                    <a href="{{ route('settings.signals') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">Signals</a>
+                    <a href="{{ route('settings.locations') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">Locations & Devices</a>
                     @endif
-                    <a href="{{ route('settings.map') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">Beacon Map</a>
-                    <a href="{{ route('settings.logs') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">IOT Logs</a>
+                    <a href="{{ route('settings.map') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">Beacon Map</a>
+                    <a href="{{ route('settings.logs') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">IOT Logs</a>
                     <form method="POST" action="{{ route('reports.system-status.download') }}">
                         @csrf
-                        <button type="submit" class="block w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">Download System Status Report</button>
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">Download System Status Report</button>
                     </form>
-                    <hr class="my-1 border-slate-grey/20 dark:border-munti-blue-1/30">
+                    <hr class="my-1 border-munti-blue-1/30">
                     @if(in_array(Auth::user()->user_level ?? '', ['superadmin', 'admin']))
-                    <a href="{{ route('settings.users') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">
+                    <a href="{{ route('settings.users') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">
                         Users
                     </a>
-                    <a href="{{ route('settings.systemLogs') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">System Logs</a>
+                    <a href="{{ route('settings.systemLogs') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">System Logs</a>
+                    <a href="{{ route('settings.syslink') }}" target="settingsWindow" class="block px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">SysLink</a>
                     <form method="POST" action="{{ route('reports.system-status.telegram') }}">
                         @csrf
-                        <button type="submit" class="block w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">Send Report to Telegram</button>
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">Send Report to Telegram</button>
                     </form>
                     @endif
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="block w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-white hover:bg-slate-grey/10 dark:hover:bg-munti-blue-1/50 transition-colors">
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-xs text-white hover:bg-munti-blue-1/50 transition-colors">
                             Log Out
                         </button>
                     </form>

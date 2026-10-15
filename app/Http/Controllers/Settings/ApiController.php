@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiConnection;
 use App\Models\Siren;
 use App\Models\Signal;
+use App\Services\SysLinkNotifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,10 @@ class ApiController extends Controller
 {
     private function getGlobalConnectionQuery(): Builder
     {
-        return ApiConnection::where('revoked', false);
+        // The SysLink row is an outbound push target with its own settings page; keep it out of
+        // this list and out of the "most recently used" fallback below.
+        return ApiConnection::where('revoked', false)
+            ->where(fn (Builder $q) => $q->whereNull('name')->orWhere('name', '!=', SysLinkNotifier::CONNECTION_NAME));
     }
 
     public function index(): View

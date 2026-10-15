@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\ApiController;
 use App\Http\Controllers\Settings\SirenController;
 use App\Http\Controllers\Settings\SystemLogController;
 use App\Http\Controllers\Settings\StatisticController;
+use App\Http\Controllers\Settings\SysLinkController;
 use App\Http\Controllers\BarangayController;
 
 
@@ -172,6 +173,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/beacons/list', [BeaconController::class, 'list'])->name('beacons.list');
 
             Route::get('/systemLogs', [SystemLogController::class, 'index'])->name('systemLogs');
+
+            Route::get('/syslink',         [SysLinkController::class, 'index'])->name('syslink');
+            Route::post('/syslink',        [SysLinkController::class, 'update'])->name('syslink.update');
+            Route::post('/syslink/test',   [SysLinkController::class, 'test'])->name('syslink.test');
+            Route::delete('/syslink',      [SysLinkController::class, 'destroy'])->name('syslink.destroy');
 
 
             Route::get('/users',      [UserController::class, 'index'])->name('users');

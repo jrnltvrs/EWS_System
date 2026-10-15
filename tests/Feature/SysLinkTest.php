@@ -1,0 +1,91 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\ApiConnection;
+use App\Models\Beacon;
+use App\Models\Location;
+use App\Models\User;
+use App\Services\SysLinkNotifier;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+
+class SysLinkTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const URL = 'http://sentinel.test:8090/api/syslink/surveillance-network/status';
+
+    private function admin(string $level = 'admin'): User
+    {
+        return User::forceCreate([
+            'username' => $level, 'first_name' => 'A', 'last_name' => 'B',
+            'password' => bcrypt('x'), 'user_level' => $level, 'first_login' => false,
+        ]);
+    }
+
+    public function test_push_sends_beacons_with_bearer_token(): void
+    {
+        $user = $this->admin();
+        ApiConnection::create(['name' => 'SysLink', 'endpoint_url' => self::URL, 'header_name' => 'Authorization', 'header_value' => 'tok123', 'user_id' => $user->id]);
+        $loc = Location::create(['location_name' => 'City Hall']);
+        Beacon::create(['name' => 'B1', 'beacon_id' => '7', 'status' => true, 'location_id' => $loc->id]);
+        Beacon::create(['name' => 'B2', 'beacon_id' => '8', 'status' => false, 'is_door_open' => true, 'location_id' => $loc->id]);
+
+        Http::fake([
+            'sentinel.test*' => Http::response([], 202),
+            '*' => Http::response([], 500), // siren API unreachable
+        ]);
+
+        $this->assertNull(app(SysLinkNotifier::class)->push());
+
+        Http::assertSent(function (Request $r) {
+            if ($r->url() !== self::URL) {
+                return false;
+            }
+            $devices = collect($r['devices'])->keyBy('id');
+            return $r->hasHeader('Authorization', 'Bearer tok123')
+                && $r['overall']['message'] === '1/2 beacons offline; siren API unreachable'
+                && $r['overall']['status'] === 'warning' // 50% offline is Critical
+                && $devices['BEACON-7']['status'] === 'online'
+                && $devices['BEACON-8']['status'] === 'offline'
+                && $devices['BEACON-8']['message'] === 'Door open'
+                && $devices['BEACON-8']['type'] === 'beacon'
+                && $devices['BEACON-8']['location'] === 'City Hall';
+        });
+        $this->assertNull(SysLinkNotifier::lastResult()['error']);
+    }
+
+    public function test_push_reports_sentinel_error(): void
+    {
+        $user = $this->admin();
+        ApiConnection::create(['name' => 'SysLink', 'endpoint_url' => self::URL, 'header_name' => 'Authorization', 'header_value' => 'bad', 'user_id' => $user->id]);
+        Http::fake(['sentinel.test*' => Http::response([], 401), '*' => Http::response([], 500)]);
+
+        $this->assertSame('Sentinel returned HTTP 401.', app(SysLinkNotifier::class)->push());
+    }
+
+    public function test_settings_page_saves_connection_and_hides_it_from_api_list(): void
+    {
+        $user = $this->admin();
+
+        $this->actingAs($user)->post(route('settings.syslink.update'), ['endpoint_url' => self::URL, 'token' => 'tok123'])
+            ->assertRedirect(route('settings.syslink'));
+
+        $conn = SysLinkNotifier::connection();
+        $this->assertSame('tok123', $conn->header_value);
+
+        // Blank token keeps the saved one.
+        $this->actingAs($user)->post(route('settings.syslink.update'), ['endpoint_url' => self::URL, 'token' => '']);
+        $this->assertSame('tok123', $conn->fresh()->header_value);
+
+        $this->actingAs($user)->getJson(route('settings.api.connections'))->assertJsonCount(0);
+    }
+
+    public function test_regular_user_is_forbidden(): void
+    {
+        $this->actingAs($this->admin('user'))->get(route('settings.syslink'))->assertForbidden();
+    }
+}
