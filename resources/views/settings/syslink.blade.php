@@ -32,7 +32,7 @@
                         <label for="endpoint_url" class="block font-medium uppercase tracking-wider text-slate-grey dark:text-lavender-grey mb-1">Endpoint URL</label>
                         <input type="url" name="endpoint_url" id="endpoint_url" required
                             value="{{ old('endpoint_url', $connection?->endpoint_url) }}"
-                            placeholder="http://sentinel-server:8090/api/syslink/surveillance-network/status"
+                            placeholder="http://sentinel-server:8090/api/syslink/ews/status"
                             class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-slate-grey/30 dark:border-blue-slate/40 rounded-lg text-prussian-blue dark:text-lavender-grey">
                         @error('endpoint_url')<p class="mt-1 text-red-500">{{ $message }}</p>@enderror
                     </div>

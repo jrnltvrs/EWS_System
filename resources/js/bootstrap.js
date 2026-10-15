@@ -9,4 +9,6 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
  * allow your team to quickly build robust real-time web applications.
  */
 
-import './echo';
+// Echo is set up in controller.blade.php (Pusher, matching BROADCAST_CONNECTION). echo.js targets Reverb,
+// which isn't configured, and it threw on load, which stopped the rest of this bundle from running.
+// import './echo';

@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Pushes beacon/siren status to Uplink Sentinel's SysLink
- * "Surveillance & Network" endpoint (POST <server>:8090/api/syslink/surveillance-network/status).
+ * Pushes beacon/siren status to Uplink Sentinel's SysLink EWS endpoint
+ * (POST http://<server>:8090/api/syslink/ews/status).
  * The endpoint URL and Bearer token live in the api_connections row named "SysLink".
  */
 class SysLinkNotifier
@@ -46,22 +46,28 @@ class SysLinkNotifier
             && ($sirens === null || StatusThreshold::label($sirens['offline'], $sirens['total']) !== 'Critical');
 
         return [
-            'system'  => 'Emergency Warning System',
-            'overall' => [
+            'system'      => 'EWS',
+            'reported_at' => now()->toIso8601String(),
+            'overall'     => [
                 'status'  => $healthy ? 'ok' : 'warning',
                 'message' => "{$beaconOffline}/{$beaconTotal} beacons offline; {$sirenText}",
             ],
             // Optional fields are omitted when empty rather than sent as null.
-            'devices' => $beacons->map(fn (Beacon $b) => array_filter([
-                'id'          => 'BEACON-' . ($b->beacon_id ?? $b->id),
-                'name'        => $b->name,
-                'type'        => 'beacon',
-                'location'    => $b->location_name,
-                'status'      => $b->status ? 'online' : 'offline',
-                'message'     => $b->is_door_open ? 'Door open' : null,
-                'reported_at' => $b->last_seen_at?->toIso8601String(),
-            ], fn ($v) => $v !== null))->values()->all(),
+            'units' => $beacons->map(fn (Beacon $b) => array_filter([
+                'id'           => self::unitId($b->beacon_id ?? $b->id),
+                'station'      => implode(' · ', array_filter([$b->name, $b->location?->location_name])),
+                'type'         => 'Beacon',
+                'status'       => $b->status ? 'online' : 'offline',
+                'message'      => $b->is_door_open ? 'Door open' : null,
+                'last_data_at' => $b->last_seen_at?->toIso8601String(),
+            ], fn ($v) => $v !== null && $v !== ''))->values()->all(),
         ];
+    }
+
+    /** "7" -> "BCN-07", matching Sentinel's EWS unit IDs; non-numeric IDs are kept as-is. */
+    private static function unitId(string|int $beaconId): string
+    {
+        return 'BCN-' . (ctype_digit((string) $beaconId) ? sprintf('%02d', $beaconId) : $beaconId);
     }
 
     /**

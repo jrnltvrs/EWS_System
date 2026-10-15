@@ -40,6 +40,11 @@ return [
         'chat_id'   => env('TELEGRAM_CHAT_ID'),
     ],
 
+    // CARTO basemap tiles now need a key (carto.com/basemaps/apikey). It is sent to the browser in tile URLs.
+    'carto' => [
+        'key' => env('CARTO_API_KEY'),
+    ],
+
     // Must match SERIAL_API_TOKEN in the serial-backend environment on the Pi.
     'serial' => [
         'token' => env('SERIAL_API_TOKEN'),

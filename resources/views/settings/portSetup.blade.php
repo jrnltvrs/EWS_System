@@ -176,8 +176,8 @@
 @include('layouts.footer')
 
 
-
-
+<!-- Loaded synchronously: the script below opens the socket while the page is parsing. -->
+<script src="http://172.0.6.250:3123/socket.io/socket.io.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('serialForm');

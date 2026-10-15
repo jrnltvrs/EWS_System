@@ -187,10 +187,10 @@
     (function() {
         const map = L.map('map').setView([14.3954452, 121.0391743], 12);
 
-        const lightLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+        const lightLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key={{ config('services.carto.key') }}', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             maxZoom: 19
         });
-        const darkLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+        const darkLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key={{ config('services.carto.key') }}', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             maxZoom: 19
         });
 
@@ -665,8 +665,8 @@
 
             expandedMap = L.map('expanded-map', { zoomControl: true }).setView([14.3954452, 121.0391743], 14);
 
-            const lightLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', { maxZoom: 19 });
-            const darkLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', { maxZoom: 19 });
+            const lightLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key={{ config('services.carto.key') }}', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 19 });
+            const darkLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key={{ config('services.carto.key') }}', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 19 });
 
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             (isDark ? darkLayer : lightLayer).addTo(expandedMap);

@@ -2618,6 +2618,8 @@ function restoreOriginal(el) {
     })();
     
 </script>
+<!-- defer: serial.js only calls io() on DOMContentLoaded, so a slow Pi can't stop the page from drawing -->
+<script defer src="http://172.0.6.250:3123/socket.io/socket.io.js"></script>
 <script src="{{ asset('js/serial.js') }}"></script>
 
 <!-- Telegram connection status indicator -->

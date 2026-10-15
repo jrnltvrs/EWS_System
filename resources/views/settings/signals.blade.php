@@ -3,6 +3,10 @@
 @include('layouts.topbar')
 @include('modals.addUser')
 
+<!-- Pickr color picker (only this page uses it) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+
 <script>
     window.existingSignals = <?= json_encode($signals) ?>;
 </script>

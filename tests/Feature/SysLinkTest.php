@@ -16,7 +16,7 @@ class SysLinkTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const URL = 'http://sentinel.test:8090/api/syslink/surveillance-network/status';
+    private const URL = 'http://sentinel.test:8090/api/syslink/ews/status';
 
     private function admin(string $level = 'admin'): User
     {
@@ -45,15 +45,17 @@ class SysLinkTest extends TestCase
             if ($r->url() !== self::URL) {
                 return false;
             }
-            $devices = collect($r['devices'])->keyBy('id');
+            $units = collect($r['units'])->keyBy('id');
             return $r->hasHeader('Authorization', 'Bearer tok123')
+                && isset($r['reported_at'])
                 && $r['overall']['message'] === '1/2 beacons offline; siren API unreachable'
                 && $r['overall']['status'] === 'warning' // 50% offline is Critical
-                && $devices['BEACON-7']['status'] === 'online'
-                && $devices['BEACON-8']['status'] === 'offline'
-                && $devices['BEACON-8']['message'] === 'Door open'
-                && $devices['BEACON-8']['type'] === 'beacon'
-                && $devices['BEACON-8']['location'] === 'City Hall';
+                && $units['BCN-07']['status'] === 'online'
+                && ! array_key_exists('message', $units['BCN-07'])
+                && $units['BCN-08'] == [
+                    'id' => 'BCN-08', 'station' => 'B2 · City Hall', 'type' => 'Beacon',
+                    'status' => 'offline', 'message' => 'Door open',
+                ];
         });
         $this->assertNull(SysLinkNotifier::lastResult()['error']);
     }

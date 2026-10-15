@@ -1,6 +1,5 @@
 
 
-    @livewireScripts
 </body>
 </html>
 
