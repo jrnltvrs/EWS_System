@@ -1158,7 +1158,8 @@ function restoreOriginal(el) {
                     const response = await fetch(`${baseUrl}/api/send`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-Serial-Token': window.serialToken
                         },
                         body: JSON.stringify({
                             data: command

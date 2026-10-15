@@ -89,6 +89,9 @@
 
     <!-- Socket.io client -->
     <script src="http://172.0.6.250:3123/socket.io/socket.io.js"></script>
+    @auth
+        <script>window.serialToken = @json(config('services.serial.token'));</script>
+    @endauth
 
     @livewireStyles
 </head>

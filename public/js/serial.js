@@ -462,7 +462,7 @@ socket.on('data', line => {
         try {
             const res = await fetch('http://172.0.6.250:3123/api/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-Serial-Token': window.serialToken },
                 body: JSON.stringify({ data: text })
             });
             const { success, error } = await res.json();

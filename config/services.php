@@ -40,4 +40,9 @@ return [
         'chat_id'   => env('TELEGRAM_CHAT_ID'),
     ],
 
+    // Must match SERIAL_API_TOKEN in the serial-backend environment on the Pi.
+    'serial' => [
+        'token' => env('SERIAL_API_TOKEN'),
+    ],
+
 ];

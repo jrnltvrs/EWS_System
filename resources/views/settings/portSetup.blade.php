@@ -465,7 +465,9 @@ function isDuplicateLog(message, type) {
     // ---------- Load available serial ports ----------
     async function loadPorts() {
         try {
-            const res = await fetch('http://172.0.6.250:3123/api/ports');
+            const res = await fetch('http://172.0.6.250:3123/api/ports', {
+                headers: { 'X-Serial-Token': window.serialToken }
+            });
             const {
                 success,
                 ports,
@@ -583,7 +585,8 @@ function isDuplicateLog(message, type) {
                 const res = await fetch('http://172.0.6.250:3123/api/connect', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-Serial-Token': window.serialToken
                     },
                     body: JSON.stringify(settings)
                 });
@@ -605,7 +608,8 @@ function isDuplicateLog(message, type) {
             log('info', 'Disconnecting...');
             try {
                 const res = await fetch('http://172.0.6.250:3123/api/disconnect', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: { 'X-Serial-Token': window.serialToken }
                 });
                 const { success, error } = await res.json();
                 if (!success) log('error', `Disconnect failed: ${error || 'Unknown'}`);
@@ -627,7 +631,8 @@ function isDuplicateLog(message, type) {
                 const res = await fetch('http://172.0.6.250:3123/api/send', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-Serial-Token': window.serialToken
                     },
                     body: JSON.stringify({ data: text })
                 });

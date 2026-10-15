@@ -3,13 +3,37 @@ const { SerialPort, ReadlineParser } = require("serialport");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
+const crypto = require("crypto");
+
+// Shared secret the Laravel pages send in X-Serial-Token; refuse to start without it.
+const API_TOKEN = process.env.SERIAL_API_TOKEN;
+if (!API_TOKEN) {
+    console.error("SERIAL_API_TOKEN is not set, refusing to start");
+    process.exit(1);
+}
+// Comma-separated origins of the Laravel app, e.g. "http://172.0.6.250".
+const ALLOWED_ORIGINS = (process.env.SERIAL_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+function isValidToken(token) {
+    if (typeof token !== "string") return false;
+    const a = Buffer.from(token);
+    const b = Buffer.from(API_TOKEN);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 const app = express();
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
+app.use("/api", (req, res, next) => {
+    if (isValidToken(req.get("X-Serial-Token"))) return next();
+    res.status(401).json({ success: false, error: "Unauthorized" });
+});
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { cors: { origin: ALLOWED_ORIGINS } });
 
 const commandQueue = [];
 let isProcessing = false;
@@ -21,7 +45,6 @@ const BUS_IDLE_DELAY = 3000; // ms of silence before bus is free
 const SAFETY_TIMEOUT = 5000; // fallback release
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 500;
-const PRIORITY_FORCE_DELAY = 500;
 
 let currentPort = null;
 let serialPortInstance = null;
@@ -122,32 +145,6 @@ function enqueueCommand(data, priority = false) {
     if (priority) {
         commandQueue.unshift(entry);
         log("info", "Priority command queued", { command: data });
-        // Force‑send timer
-        setTimeout(() => {
-            if (
-                isProcessing &&
-                currentCommand &&
-                currentCommand.data === data
-            ) {
-                log("warn", "Priority command force-sending", { data });
-                if (serialPortInstance && serialPortInstance.isOpen) {
-                    serialPortInstance.write(data + "\n", (err) => {
-                        if (err)
-                            log("error", "Force write failed", {
-                                error: err.message,
-                            });
-                        else
-                            log("debug", "Force-sent priority command", {
-                                data,
-                            });
-                        releaseBus();
-                    });
-                    if (safetyTimeout) clearTimeout(safetyTimeout);
-                } else {
-                    releaseBus();
-                }
-            }
-        }, PRIORITY_FORCE_DELAY);
     } else {
         commandQueue.push(entry);
         log("info", "Command queued", { command: data });
@@ -155,24 +152,12 @@ function enqueueCommand(data, priority = false) {
     processQueue();
 }
 
-function isArduinoPort(port) {
-    const manufacturer = (port.manufacturer || "").toLowerCase();
-    const path = port.path.toLowerCase();
+// USB vendor IDs: Arduino LLC, Arduino SRL, WCH (CH340 clones).
+// Path/name matching is too loose on a Pi: it also catches the onboard /dev/ttyAMA0 and /dev/ttyS0.
+const ARDUINO_VENDOR_IDS = ["2341", "2a03", "1a86"];
 
-    return (
-        manufacturer.includes("arduino") ||
-        manufacturer.includes("usb") ||
-        manufacturer.includes("serial") ||
-        manufacturer.includes("wch") ||
-        path.includes("usb") ||
-        path.includes("tty") ||
-        port.vendorId === "2341" ||
-        port.vendorId === "1a86" ||
-        port.productId === "0043" ||
-        port.productId === "0001" ||
-        port.productId === "0010" ||
-        port.productId === "7523"
-    );
+function isArduinoPort(port) {
+    return ARDUINO_VENDOR_IDS.includes((port.vendorId || "").toLowerCase());
 }
 
 async function findAndConnectArduino() {
@@ -621,8 +606,11 @@ app.post("/api/disconnect", (req, res) => {
 
 app.post("/api/send", (req, res) => {
     const { data, priority = false } = req.body;
-    if (!data)
+    if (typeof data !== "string" || !data)
         return res.status(400).json({ success: false, error: "Missing data" });
+    // A line break would let one request inject extra commands onto the bus.
+    if (/[\r\n]/.test(data))
+        return res.status(400).json({ success: false, error: "Invalid data" });
     if (!serialPortInstance || !serialPortInstance.isOpen) {
         return res.status(400).json({ success: false, error: "Not connected" });
     }
