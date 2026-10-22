@@ -3,6 +3,19 @@
 @include('layouts.topbar')
 
 <script>
+    // Reset the displayed door state when connectivity is lost; do not send a hardware command.
+    window.clearOfflineBeaconDoor = function(beaconId) {
+        document.querySelectorAll(`.beacon-item[data-beacon-id="${beaconId}"]`).forEach(beacon => {
+            beacon.setAttribute('data-door-open', 'false');
+            const icon = beacon.querySelector('.door-icon');
+            if (icon) {
+                icon.classList.remove('text-munti-red-0', 'text-red-500');
+                icon.classList.add('text-gray-900');
+            }
+        });
+        window.removeOpenDoor?.(beaconId);
+        window.beaconMap?.updateMarker?.(beaconId, false, false);
+    };
     window.sirenLocations = <?= json_encode(
         $sirens->mapWithKeys(function ($siren) {
             return [$siren->oid => $siren->location?->location_name ?? $siren->group ?? 'Unknown'];
@@ -124,7 +137,7 @@
         $beacons->mapWithKeys(function ($beacon) {
             return [$beacon->beacon_id => [
                 'name' => $beacon->name ?? 'Unnamed Beacon',
-                'is_door_open' => $beacon->is_door_open ?? false
+                'is_door_open' => $beacon->status && $beacon->is_door_open
             ]];
         })
     ) ?>;
@@ -666,7 +679,7 @@ function restoreOriginal(el) {
 
             beacons.forEach(beacon => {
                 const isOnline = beacon.status;
-                const isDoorOpen = beacon.is_door_open || false;
+                const isDoorOpen = !!isOnline && !!beacon.is_door_open;
                 const displayGroup = beacon.location?.location_name || beacon.group || 'Unknown';
 
                 const button = document.createElement('button');
@@ -1856,6 +1869,10 @@ function restoreOriginal(el) {
             })
             .listen('beacon.door.updated', (data) => {
                 console.log('Door update via Pusher:', data);
+                if (document.querySelector(`.beacon-item[data-beacon-id="${data.beacon_id}"].offline-item`)) {
+                    window.clearOfflineBeaconDoor(data.beacon_id);
+                    return;
+                }
                 const beaconBtn = document.querySelector(`.beacon-item[data-beacon-id="${data.beacon_id}"]`);
                 if (!beaconBtn) return;
 
@@ -1890,6 +1907,7 @@ function restoreOriginal(el) {
 
         // Function to update beacon status in the UI
         function updateBeaconStatus(beaconId, isOnline) {
+            if (!isOnline) window.clearOfflineBeaconDoor(beaconId);
             const beaconElements = document.querySelectorAll(`.beacon-item[data-beacon-id="${beaconId}"]`);
 
             beaconElements.forEach(beacon => {
@@ -1971,6 +1989,10 @@ function restoreOriginal(el) {
 
         // Function to update door status in the UI
         function updateDoorStatus(beaconId, isDoorOpen) {
+            if (document.querySelector(`.beacon-item[data-beacon-id="${beaconId}"].offline-item`)) {
+                window.clearOfflineBeaconDoor(beaconId);
+                return;
+            }
             const beaconBtn = document.querySelector(`.beacon-item[data-beacon-id="${beaconId}"]`);
             if (!beaconBtn) return;
 
@@ -2546,6 +2568,7 @@ function restoreOriginal(el) {
 
         // Functions to add or remove open doors from the map and update the modal
         function addOpenDoor(beaconId, beaconName) {
+            if (document.querySelector(`.beacon-item[data-beacon-id="${beaconId}"].offline-item`)) return;
             if (!beaconId) return;
             openDoorsMap.set(beaconId, beaconName || 'Unknown Beacon');
             updateDoorPopup();

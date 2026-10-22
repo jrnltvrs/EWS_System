@@ -503,6 +503,7 @@ socket.on('data', line => {
     ];
 
     function setBeaconOffline(beaconId) {
+        window.clearOfflineBeaconDoor?.(beaconId);
         const btn = document.querySelector(`.beacon-item[data-beacon-id="${beaconId}"]`);
         if (!btn) return;
 

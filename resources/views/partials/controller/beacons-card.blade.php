@@ -27,7 +27,7 @@
                     </svg> --}}
                     <!-- Door-open icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                        class="w-4 h-4 door-icon {{ $beacon->is_door_open ? 'text-red-500' : 'text-munti-black-0' }}"
+                        class="w-4 h-4 door-icon {{ $isOnline && $beacon->is_door_open ? 'text-red-500' : 'text-munti-black-0' }}"
                         fill="currentColor">
                         <title>Door-open</title>
                         <path d="M5 5v14a1 1 0 0 0 1 1h3v-2H7V6h2V4H6a1 1 0 0 0-1 1m14.242-.97l-8-2A1 1 0 0 0 10 3v18a.998.998 0 0 0 1.242.97l8-2A1 1 0 0 0 20 19V5a1 1 0 0 0-.758-.97M15 12.188a1.001 1.001 0 0 1-2 0v-.377a1 1 0 1 1 2 .001z" />
