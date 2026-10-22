@@ -177,9 +177,13 @@
 
 
 <!-- Loaded synchronously: the script below opens the socket while the page is parsing. -->
-<script src="http://172.0.6.250:3123/socket.io/socket.io.js"></script>
+<script src="{{ config('services.serial.url') }}/socket.io/socket.io.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.io !== 'function') {
+            console.warn('Serial backend unavailable. Start it and reload this page.');
+            return;
+        }
         const form = document.getElementById('serialForm');
         if (!form) return;
 
@@ -291,7 +295,7 @@ function isDuplicateLog(message, type) {
                     return this.socket;
                 }
                 
-                this.socket = io('http://172.0.6.250:3123', {
+                this.socket = io(window.serialBackendUrl, {
                     reconnection: true,
                     reconnectionAttempts: 5,
                     reconnectionDelay: 1000
@@ -465,7 +469,7 @@ function isDuplicateLog(message, type) {
     // ---------- Load available serial ports ----------
     async function loadPorts() {
         try {
-            const res = await fetch('http://172.0.6.250:3123/api/ports', {
+            const res = await fetch(window.serialBackendUrl + '/api/ports', {
                 headers: { 'X-Serial-Token': window.serialToken }
             });
             const {
@@ -582,7 +586,7 @@ function isDuplicateLog(message, type) {
             log('info', `Connecting to ${path} with settings:\n${JSON.stringify(settings, null, 2)}`);
 
             try {
-                const res = await fetch('http://172.0.6.250:3123/api/connect', {
+                const res = await fetch(window.serialBackendUrl + '/api/connect', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -607,7 +611,7 @@ function isDuplicateLog(message, type) {
         els.disconnect.addEventListener('click', async () => {
             log('info', 'Disconnecting...');
             try {
-                const res = await fetch('http://172.0.6.250:3123/api/disconnect', {
+                const res = await fetch(window.serialBackendUrl + '/api/disconnect', {
                     method: 'POST',
                     headers: { 'X-Serial-Token': window.serialToken }
                 });
@@ -628,7 +632,7 @@ function isDuplicateLog(message, type) {
             log('info', `Sending: ${text}`);
 
             try {
-                const res = await fetch('http://172.0.6.250:3123/api/send', {
+                const res = await fetch(window.serialBackendUrl + '/api/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

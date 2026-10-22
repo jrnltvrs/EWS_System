@@ -43,7 +43,11 @@
 
     {{-- socket.io is loaded only by the pages that talk to the Pi (controller, settings/portSetup). --}}
     @auth
-        <script>window.serialToken = @json(config('services.serial.token'));</script>
+        <script>
+            window.serialToken = @json(config('services.serial.token'));
+            window.serialBackendUrl = @json(config('services.serial.url'));
+            window.sirenApiConfigured = @json(\App\Models\ApiConnection::where('name', 'Siren')->where('revoked', false)->exists());
+        </script>
     @endauth
 </head>
 

@@ -835,6 +835,7 @@ function restoreOriginal(el) {
         const CACHE_DURATION = 1000 * 3; // 3 seconds cache duration
 
         async function fetchDeviceStatus(force = false) {
+            if (!window.sirenApiConfigured) return;
             const now = Date.now();
             if (!force && cachedDeviceStatus && (now - lastFetchTime) < CACHE_DURATION) {
                 console.log('Using cached device status');
@@ -879,6 +880,12 @@ function restoreOriginal(el) {
 
         // Optimized sirens loading with merged API and DB data, and better error handling
         async function loadSirensFromAPI(showLoading = true) {
+            if (!window.sirenApiConfigured) {
+                if (sirensContainer) {
+                    sirensContainer.innerHTML = '<div class="col-span-full text-center py-10 text-munti-black-0 text-sm italic">No sirens added yet</div>';
+                }
+                return;
+            }
             if (!sirensContainer) return;
 
             if (showLoading && sirensContainer.children.length === 0) {
@@ -942,7 +949,7 @@ function restoreOriginal(el) {
                 }
 
                 if (apiSirens.length === 0 && dbOnlySirens.length === 0) {
-                    sirensContainer.innerHTML = '<div class="col-span-full text-center p-10 text-gray-600 dark:text-munti-red-0 text-sm italic">No sirens found</div>';
+                    sirensContainer.innerHTML = '<div class="col-span-full text-center py-10 text-munti-black-0 text-sm italic">No sirens added yet</div>';
                     return;
                 }
                 
@@ -1146,7 +1153,7 @@ function restoreOriginal(el) {
                 retryDelayMs = 300
             } = options;
             
-            const baseUrl = window.serialConfig?.socketUrl || 'http://172.0.6.250:3123';
+            const baseUrl = window.serialConfig?.socketUrl || window.serialBackendUrl;
 
             console.log(`[sendCommand] Sending: ${command}`);
             
@@ -1298,6 +1305,9 @@ function restoreOriginal(el) {
 
         // Helper function to send siren activation with error handling
         async function activateSiren(sirenOid, signalOid, volume) {
+            if (!window.sirenApiConfigured) {
+                throw new Error('Siren API is not configured. Local beacon controls are still available.');
+            }
             try {
                 const payload = {
                     signal: signalOid,
@@ -1338,6 +1348,9 @@ function restoreOriginal(el) {
 
         // Helper function to send siren deactivation with error handling
         async function deactivateSiren(sirenOid) {
+            if (!window.sirenApiConfigured) {
+                throw new Error('Siren API is not configured. Local beacon controls are still available.');
+            }
             try {
                 const payload = { sirens: [sirenOid] };
                 
@@ -1797,7 +1810,7 @@ function restoreOriginal(el) {
         window.serialConfig = {
             logUrl: "{{ route('logs.store') }}",
             csrfToken: "{{ csrf_token() }}",
-            socketUrl: "http://172.0.6.250:3123"
+            socketUrl: window.serialBackendUrl
         };
 
         // Initialize Pusher and Echo for real-time updates
@@ -1986,6 +1999,7 @@ function restoreOriginal(el) {
 
         // Function to fetch device status from the server and update the UI
         async function fetchDeviceStatus() {
+            if (!window.sirenApiConfigured) return;
             try {
                 const response = await fetch('{{ route("settings.api.fetch") }}?path=/api/Data/Status&connection_name=Siren', {
                     headers: {
@@ -2619,7 +2633,7 @@ function restoreOriginal(el) {
     
 </script>
 <!-- defer: serial.js only calls io() on DOMContentLoaded, so a slow Pi can't stop the page from drawing -->
-<script defer src="http://172.0.6.250:3123/socket.io/socket.io.js"></script>
+<script defer src="{{ config('services.serial.url') }}/socket.io/socket.io.js"></script>
 <script src="{{ asset('js/serial.js') }}"></script>
 
 <!-- Telegram connection status indicator -->

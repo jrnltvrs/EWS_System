@@ -17,7 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const csrfToken = window.serialConfig?.csrfToken;
     const logUrl = window.serialConfig?.logUrl;
-    const socket = io(window.serialConfig?.socketUrl || 'http://172.0.6.250:3123');
+    if (typeof window.io !== 'function') {
+        els.liveIndicator.textContent = 'Serial backend unavailable';
+        els.sendBtn.disabled = true;
+        console.warn('Start the serial backend and reload this page to enable serial communication.');
+        return;
+    }
+    const serialUrl = window.serialConfig?.socketUrl || window.serialBackendUrl;
+    const socket = io(serialUrl);
 
     const escapeHtml = unsafe => unsafe.replace(/[&<>"']/g, m => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
@@ -460,7 +467,7 @@ socket.on('data', line => {
         if (!text) return;
         log('info', `Sending: ${text}`);
         try {
-            const res = await fetch('http://172.0.6.250:3123/api/send', {
+            const res = await fetch(`${serialUrl}/api/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Serial-Token': window.serialToken },
                 body: JSON.stringify({ data: text })

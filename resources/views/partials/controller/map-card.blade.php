@@ -346,6 +346,7 @@
         }
 
         async function fetchApiSirens() {
+            if (!window.sirenApiConfigured) return;
             try {
                 const response = await fetch('{{ route("settings.api.fetch") }}?path=/api/Data/Sirens&connection_name=Siren', {
                     method: 'GET',

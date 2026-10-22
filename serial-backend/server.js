@@ -4,11 +4,20 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const crypto = require("crypto");
+const path = require("path");
+
+// Share Laravel's configuration regardless of the directory we start from.
+// Variables supplied by the shell/service retain precedence.
+try {
+    process.loadEnvFile(path.resolve(__dirname, "../.env"));
+} catch (err) {
+    if (err.code !== "ENOENT") throw err;
+}
 
 // Shared secret the Laravel pages send in X-Serial-Token; refuse to start without it.
 const API_TOKEN = process.env.SERIAL_API_TOKEN;
 if (!API_TOKEN) {
-    console.error("SERIAL_API_TOKEN is not set, refusing to start");
+    console.error("SERIAL_API_TOKEN is not set. Set it in the project root .env or the service environment before starting.");
     process.exit(1);
 }
 // Comma-separated origins of the Laravel app, e.g. "http://172.0.6.250".
