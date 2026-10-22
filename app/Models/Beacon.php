@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;      // ADD THIS
 use Spatie\Activitylog\LogOptions;                // ADD THIS
 use App\Jobs\SendBeaconStatusTelegramNotification;
+use App\Services\SysLinkNotifier;
 
 class Beacon extends Model
 {
@@ -85,6 +86,10 @@ class Beacon extends Model
                     $beacon->group,
                     (bool) $beacon->status,
                 );
+            }
+
+            if ($beacon->wasChanged(['status', 'is_door_open'])) {
+                SysLinkNotifier::pushAfterResponse();
             }
         });
     }
