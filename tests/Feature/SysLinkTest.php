@@ -60,6 +60,30 @@ class SysLinkTest extends TestCase
         $this->assertNull(SysLinkNotifier::lastResult()['error']);
     }
 
+    public function test_beacon_changes_push_once_after_response(): void
+    {
+        $user = $this->admin();
+        ApiConnection::create(['name' => 'SysLink', 'endpoint_url' => self::URL, 'header_name' => 'Authorization', 'header_value' => 'tok123', 'user_id' => $user->id]);
+        $loc = Location::create(['location_name' => 'City Hall']);
+        $a = Beacon::create(['name' => 'B1', 'beacon_id' => '7', 'status' => true, 'location_id' => $loc->id]);
+        $b = Beacon::create(['name' => 'B2', 'beacon_id' => '8', 'status' => true, 'location_id' => $loc->id]);
+        Http::fake(['sentinel.test*' => Http::response([], 202), '*' => Http::response([], 500)]);
+
+        $a->update(['status' => false]);
+        $b->update(['is_door_open' => true]);
+        $a->update(['name' => 'Renamed']); // not a status change
+        $sentinelCalls = fn () => collect(Http::recorded())->filter(fn ($pair) => $pair[0]->url() === self::URL);
+        $this->assertCount(0, $sentinelCalls()); // nothing until the response is done
+
+        $this->app->terminate();
+
+        $sentinelCalls = $sentinelCalls();
+        $this->assertCount(1, $sentinelCalls);
+        $units = collect($sentinelCalls->first()[0]['units'])->keyBy('id');
+        $this->assertSame('offline', $units['BCN-07']['status']);
+        $this->assertSame('Door open', $units['BCN-08']['message']);
+    }
+
     public function test_push_reports_sentinel_error(): void
     {
         $user = $this->admin();

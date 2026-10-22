@@ -25,6 +25,25 @@ class SysLinkNotifier
     {
     }
 
+    private static bool $pushQueued = false;
+
+    /**
+     * Push once after the current response is sent, so a beacon change reaches Sentinel right away
+     * without slowing the request or needing a queue worker. Many changes in one request = one push.
+     */
+    public static function pushAfterResponse(): void
+    {
+        if (self::$pushQueued || ! self::connection()) {
+            return;
+        }
+        self::$pushQueued = true;
+
+        dispatch(function () {
+            self::$pushQueued = false;
+            app(self::class)->push();
+        })->afterResponse();
+    }
+
     public static function connection(): ?ApiConnection
     {
         return ApiConnection::where('revoked', false)->where('name', self::CONNECTION_NAME)->first();
