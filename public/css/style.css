@@ -51,6 +51,13 @@ body {
     }
 }
 
+/* Keep selected locations and beacons consistent, including while hovered. */
+#groups-container .select-all-items.bg-munti-yellow-0,
+.beacon-item.online-item.bg-munti-yellow-0 {
+    background-color: #fccc3d;
+    box-shadow: 0 3px 0 0 #ca8a04;
+}
+
 .selected-row {
     background-color: rgba(59, 130, 246, 0.1);
 }
